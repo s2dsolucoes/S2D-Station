@@ -1,8 +1,6 @@
 #include "header.h"
 
 AESMessage aes; // Criptografia AES 128 CBC
-// EEPROMStorage eeprom; // Ler e escrever na EEPROM
-//  Temperature *temp;    // Sensores de temperatura
 
 #define BAND 915E6
 
@@ -12,10 +10,6 @@ TaskHandle_t tskDataCollect;
 
 // *****************************************************************
 // * Esqueletos de mensagens frequentementes usadas na comunicação
-
-// Mensagem para a temperatura de um sensor
-// Ex: {"id":"243NB4GX","type": 1,"id_temp":12345,"temp":18.69}
-const char *TEMP_RESPONSE = "{\"id\":\"%s\",\"id_temp\":%d,\"temp\":%.3lf}";
 
 // Mensagem para a profundidade e leitura de metros cubicos de um sensor
 // Ex: {"id":"561XS8FR","id_depth": 16548, }
@@ -88,15 +82,10 @@ unsigned long restartTimer = 0;
 static esp_adc_cal_characteristics_t adc1_chars;
 uint32_t currentSensorAdc; // Valor ADC
 double depth;
-// ADC1_CHANNEL_6 = GPIO34
-
-// xQueueHandle pcnt_evt_queue;              // A queue to handle pulse counter events
-// pcnt_isr_handle_t user_isr_handle = NULL; // user's ISR service handle
 
 int16_t count = 0;
 
 unsigned long multPulses = 0;
-// unsigned long counterPulsesOld = 0;
 
 int contador_acionamentos = 0;
 unsigned long timestamp_ultimo_acionamento = 0;
@@ -113,39 +102,9 @@ void IRAM_ATTR funcao_ISR()
   if ((millis() - timestamp_ultimo_acionamento) >= TEMPO_DEBOUNCE)
   {
     ltrs = ltrs + multLtrs;
-    // ltrs++;
     timestamp_ultimo_acionamento = millis();
   }
 }
-
-// // /* Função ISR (chamada quando há geração da
-// void handleInterrupt() {
-//   unsigned long agora = millis(); // Obtém o tempo atual em milissegundos
-
-//   if (digitalRead(GPIO_BOTAO) == HIGH) { // Se a borda for de subida
-//     ultimaSubida = agora; // Registra o tempo da última borda de subida
-//     subidaDetectada = true; // Indica que uma borda de subida foi detectada
-//   } else { // Se a borda for de descida
-//     ultimaDescida = agora; // Registra o tempo da última borda de descida
-//     descidaDetectada = true; // Indica que uma borda de descida foi detectada
-//   }
-
-//   // Se tanto a borda de subida quanto a de descida foram detectadas
-//   if (subidaDetectada && descidaDetectada) {
-//     // Calcula o intervalo entre as bordas de subida e descida
-//     unsigned long intervalo = ultimaDescida - ultimaSubida;
-
-//     // Se o intervalo for maior ou igual ao intervalo mínimo desejado
-//     if (intervalo >= intervaloMinimo)
-//     {
-//       ltrs++; // Incrementa a variável de litros
-//     }
-
-//     // Reseta as flags de detecção de bordas
-//     subidaDetectada = false;
-//     descidaDetectada = false;
-//   }
-// }
 
 /**
  * Recebe os pacotes criptografados por LoRa e os converte em instruções.
@@ -219,35 +178,23 @@ void sendEncryptedLoRa(char *msg)
   }
   delay(500);
 }
+//! ****************************************************************************************************************************************
 
+//! Start Request
 /**
  * No momento captura o id e o tipo dos sensores e envia para o GW
- *
  */
 void startRequest()
 {
-  // // Captura as temperaturas no momento do request
-  // // temp->captureTemperatures();
-  // // currentSensor = 0;
-
-  //  //Envia JSON com número de sensores do station
-  // //  sprintf(responseLoRa, NUM_SENSORS_RESPONSE, stationId, 2); //!Verificar
-
-  // // double cubic = ltrs / 1000;
-  // // int sensorId = 0001;
-
-  // // //*DEPTH_RESPONSE = "{\"id\":\"%s\",\"id_sensor\":%d,\"ltrs\":%.3lf,\"id_sensor2\":%d,\"depth\":%.2f}";
-  // // sprintf(responseLoRa, DEPTH_RESPONSE, stationId, type, sensorId, cubic, id_sensor2, depth);
-
-  // // sendEncryptedLoRa(responseLoRa);
-
   currentSensor = 0;
 
   // Envia JSON com número de sensores do station
-  sprintf(responseLoRa, NUM_SENSORS_RESPONSE, stationId, TYPE_SENSOR, 1);
+  sprintf(responseLoRa, NUM_SENSORS_RESPONSE, stationId, TYPE_SENSOR, 2);
   sendEncryptedLoRa(responseLoRa);
 }
+//! ****************************************************************************************************************************************
 
+//! Check String
 bool checkString(const char *p)
 {
   if (p == NULL)
@@ -268,7 +215,9 @@ bool checkString(const char *p)
     return true;
   }
 }
+//! ****************************************************************************************************************************************
 
+//! ****************************************************************************************************************************************
 String getParam(String name)
 {
   String value;
@@ -277,64 +226,27 @@ String getParam(String name)
     value = wm.server->arg(name); // O valor da variavel 'name' é atrubuido a variavel 'value'
   }
   return value;
-}
+}//! ****************************************************************************************************************************************
 
+//! ****************************************************************************************************************************************
 void saveParamCallback()
 {
   Serial.println("[CALLBACK] saveParamCallback fired");
   Serial.println("PARAM customfieldid = " + getParam("customfieldid"));
 }
+//! ****************************************************************************************************************************************
 
-/*
-void DataCollect(void *pvParameters)
-{
-  while(1)
-  {
-  value = analogRead(4) / 4;
-  nbRead++;
-
-  now = millis();
-
-  if ((now - timestamp_ultimo_acionamento) > 1800)
-  {
-
-    if ((currentstate == SILVER) && (value > HIGH_THRESHOLD) && (previousvalue > HIGH_THRESHOLD))
-    {
-      currentstate = RED;
-      Serial.printf("Estado Vermelho\n");
-    }
-
-    if ((currentstate == RED) && (value < LOW_THRESHOLD) && (previousvalue < LOW_THRESHOLD))
-    {
-      currentstate = SILVER;
-      ltrs++;
-      // Serial.printf("water:top:%f", ltrs);
-    }
-    else if ((nbRead % 50) == 0)
-    {
-      // Serial.printf("water:alive\n");
-    }
-    timestamp_ultimo_acionamento = now;
-    // timestamp_pos = now;
-  }
-
-  // Loop at 10 Hz
-  previousvalue = value;
-  esp_task_wdt_reset();
-  }
-}
-*/
-
+//! WiFi Setup
 void connectWifi(bool active)
 {
   if (active)
   {
     WiFi.mode(WIFI_STA); // explicitly set mode, esp defaults to STA+AP
-    // wm.setCountry("US");
-    // wm.setCountry("CN");
 
     if (wm_nonblocking)
+    {
       wm.setConfigPortalBlocking(false);
+    }
 
     const char *custom_radio_str = "<br/><label for='customfieldid'>Custom Field Label</label><input type='radio' name='customfieldid' value='1' checked> One<br><input type='radio' name='customfieldid' value='2'> Two<br><input type='radio' name='customfieldid' value='3'> Three";
     new (&custom_field) WiFiManagerParameter(custom_radio_str);
@@ -342,28 +254,14 @@ void connectWifi(bool active)
     wm.addParameter(&custom_field);
     wm.setSaveParamsCallback(saveParamCallback);
 
-    // custom menu via array or vector
-    //
-    // menu tokens, "wifi","wifinoscan","info","param","close","sep","erase","restart","exit" (sep is seperator) (if param is in menu, params will not show up in wifi page!)
-    // const char* menu[] = {"wifi","info","param","sep","restart","exit"};
-    // wm.setMenu(menu,6);
     std::vector<const char *> menu = {"wifi", "info", "param", "sep", "restart", "exit"};
     wm.setMenu(menu);
 
-    // set dark theme
     wm.setClass("invert");
 
-    // set static ip
-    //  wm.setSTAStaticIPConfig(IPAddress(10,0,1,99), IPAddress(10,0,1,1), IPAddress(255,255,255,0)); // set static ip,gw,sn
-    //  wm.setShowStaticFields(true); // force show static ip fields
-    //  wm.setShowDnsFields(true);    // force show dns field always
-
-    // wm.setConnectTimeout(20); // how long to try to connect for before continuing
-    wm.setConfigPortalTimeout(50); // auto close configportal after n seconds
+    wm.setConfigPortalTimeout(80);
 
     bool res;
-    // res = wm.autoConnect(); // auto generated AP name from chipid
-    // res = wm.autoConnect("AutoConnectAP"); // anonymous ap
     res = wm.autoConnect("S2D MPC100", "password"); // password protected ap
 
     if (!res)
@@ -383,7 +281,9 @@ void connectWifi(bool active)
     WiFi.disconnect(true, false);
   }
 }
+//! ****************************************************************************************************************************************
 
+//! Parse Package
 /**
  * Executa a instrução recebida pelo Gateway, são dois tipos diferentes
  * de instruções que podem ser recebidas:
@@ -404,19 +304,18 @@ void parsePackage()
 {
   if (DEBUG)
   {
-    Serial.print(F("Entrou ParsePackage"));
+    Serial.print("Entrou no ParsePackage");
   }
   hasLoRaMsg = false;
-  // StaticJsonDocument<96> doc;
   JsonDocument doc;
   DeserializationError error = deserializeJson(doc, LoRaMsg);
   if (DEBUG)
   {
-    Serial.print(F("passou do deserialize"));
+    Serial.print("passou do deserialize");
   }
   if (error)
   {
-    Serial.print(F("DeserializeJson() failed: "));
+    Serial.print("DeserializeJson() failed: ");
     Serial.println(error.f_str());
     return;
   }
@@ -432,7 +331,6 @@ void parsePackage()
   double multLtrsValue = doc["multLtrsValue"];
   int wifiMode = doc["wifiMode"];
   bool setDebug = doc["debug"];
-  // int msg_num = doc["msg_num"];
 
   // A instrução é para esse station?
   if (strcmp(stationId, id) == 0)
@@ -640,7 +538,9 @@ void parsePackage()
     }
   }
 }
+//! ****************************************************************************************************************************************
 
+//! Checagem de botão
 /**
  * @brief Lógica para dar reset nas configurações usando o botao prog na placa
  *
@@ -668,21 +568,15 @@ void checkButton()
     }
   }
 }
+//! ****************************************************************************************************************************************
 
+//! Atualização via OTA
 void atualizarOTA()
 {
   Serial.println(F("---------------------------------------"));
   Serial.println(F("------------  Update! OTA  ------------"));
   Serial.println(F("---------------------------------------"));
   Serial.println("Conectando em: " + String(servidorOTA));
-
-  // sprintf(endpointMessageUPD, MESSAGE_MASK, "UPD_STARTED");
-
-  // publishCfg(endpointMessageUPD);
-  // Serial.println();
-  // Serial.print(F("endpointMessageUPD: "));
-  // Serial.print(endpointMessageUPD);
-  // Serial.println();
 
   HTTPClient http;
 
@@ -708,12 +602,9 @@ void atualizarOTA()
             {
               Serial.println(F("Erro na escrita durante a update!!"));
 
-              // sprintf(endpointMessageUPD, MESSAGE_MASK, "ERRO_ESCRITA");
               Serial.println();
               Serial.print(F("Endpoint Message"));
-              // Serial.print(endpointMessageUPD);
               Serial.println();
-              // publishCfg(endpointMessageUPD);
               break;
             }
           }
@@ -723,13 +614,9 @@ void atualizarOTA()
       {
         Serial.printf("Erro ao buscar o arquivo de update!. Código HTTP: %d\n", httpCode);
 
-        // sprintf(endpointMessageUPD, MESSAGE_MASK, "ERRO_ARQUIVO");
         Serial.println();
         Serial.print(F("Endpoint Message"));
-        // Serial.print(endpointMessageUPD);
         Serial.println();
-
-        // publishCfg(endpointMessageUPD);
       }
       http.end();
 
@@ -737,15 +624,9 @@ void atualizarOTA()
       {
         Serial.println();
         Serial.print(F("SDIP-01 Atualizado para Versao:"));
-        // Serial.println(newVersion);
-        Serial.println();
-
-        // sprintf(endpointMessageUPD, MESSAGE_MASK, "UPD_COMPLETED");
         Serial.println();
         Serial.print(F("Endpoint Message"));
-        // Serial.print(endpointMessageUPD);
         Serial.println();
-        // publishCfg(endpointMessageUPD);
 
         // Verifica se a versão armazenada é diferente da nova
         int stored_num_version = EEPROM.readInt(VERSION_NUM_POS);
@@ -759,19 +640,20 @@ void atualizarOTA()
       }
       else
       {
-        Serial.println(F("Erro ao finalizar update!!"));
+        Serial.println("Erro ao finalizar update!!");
       }
     }
     else
     {
-      Serial.println(F("Erro ao iniciar update!"));
+      Serial.println("Erro ao iniciar update!");
     }
   }
   else
   {
-    Serial.println(F("Erro na conexão HTTP!"));
+    Serial.println("Erro na conexão HTTP!");
   }
 }
+//! ****************************************************************************************************************************************
 
 /**
  * Recebe pacotes via LoRa e executa as suas instruções
@@ -783,30 +665,10 @@ void atualizarOTA()
  * ! Não pode haver delays, há chance de pular algum pacote recebido
  *
  */
-
+//! Setup
 void setup()
 {
   Serial.begin(9600);
-
-  // xTaskCreatePinnedToCore(
-  //     comunicate,      /* Task function. */
-  //     "tskComunicate", /* name of task. */
-  //     10000,           /* Stack size of task */
-  //     NULL,            /* parameter of the task */
-  //     1,               /* priority of the task */
-  //     &tskComunicate,  /* Task handle to keep track of created task */
-  //     0);              /* pin task to core 0 */
-  // delay(500);
-
-  // xTaskCreatePinnedToCore(
-  //     DataCollect,      /* Task function. */
-  //     "tskDataCollect", /* name of task. */
-  //     10000,            /* Stack size of task */
-  //     NULL,             /* parameter of the task */
-  //     1,                /* priority of the task */
-  //     &tskDataCollect,  /* Task handle to keep track of created task */
-  //     1);               /* pin task to core 1 */
-  // delay(500);
 
   Serial.setDebugOutput(true);
   pinMode(TRIGGER_PIN, INPUT);
@@ -814,16 +676,8 @@ void setup()
   // Inicializa a EEPROM do ESP32
   EEPROM.begin(256);
 
-  // pinMode(GPIO_BOTAO, INPUT);
-  // attachInterrupt(GPIO_BOTAO, funcao_ISR, FALLING);
   pinMode(GPIO_BOTAO, INPUT);
   attachInterrupt(GPIO_BOTAO, funcao_ISR, RISING);
-
-  // attachInterrupt(digitalPinToInterrupt(GPIO_BOTAO), handleInterrupt, CHANGE);
-
-  // pinMode(GPIO_BOTAO, INPUT_PULLUP);                                   // Define o pino do sensor como entrada com pull-up
-  // attachInterrupt(digitalPinToInterrupt(GPIO_BOTAO), ltrs++, FALLING); // Configura a interrupção
-  // // pulseCount = 0;  // Inicializa o contador de pulsos
 
   // Setup LoRa transceiver module
   LoRa.setPins(ss, rst, dio0);
@@ -852,8 +706,6 @@ void setup()
 
   checkButton(); // Verifica se o botao está pressionado para dar reset
 
-  // esp_adc_cal_characteristics_t adc1_chars;
-
   // Estrutura que contem as informacoes para calibracao
   esp_adc_cal_value_t adc_type = esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_11, ADC_WIDTH_BIT_12, 1100, &adc1_chars); // Inicializa a estrutura de calibracao
 
@@ -870,9 +722,6 @@ void setup()
     ESP_LOGW("ADC CAL", "Nada encontrado, utilizando Vref padrao: %umV", adc_type.vref);
   }
 
-  // Busca os últimos dados armazenados na EEPROM (id do station)
-  // char storedId[ID_LEN];
-
   for (uint8_t i = 0; i < ID_LEN; i++)
   {
     stationId[i] = EEPROM.read(ID_POSITION + i); // Lê um char por vez
@@ -884,7 +733,7 @@ void setup()
   {
     if (strcmp(stationId, STATION_ID) != 0)
     {
-      Serial.println(F("\n**Salvando id na EEPROM**\n"));
+      Serial.println("\n**Salvando id na EEPROM**\n");
       for (int i = 0; i < ID_LEN; i++)
       {
         EEPROM.write(ID_POSITION + i, STATION_ID[i]); // Escreve um char por vez
@@ -899,16 +748,14 @@ void setup()
     strncpy(stationId, stationId, ST_ID_LEN);
   }
 
-  // xTaskCreate(&teste, "Recebe Lora", 2048, NULL, 0, NULL);
-
-  Serial.println(F("\n**Info"));
-  Serial.print(F("ID: "));
+  Serial.println("\n**Info");
+  Serial.print("ID: ");
   Serial.println(stationId);
-  Serial.print(F("Debug: "));
+  Serial.print("Debug: ");
   Serial.println(DEBUG);
-  Serial.print(F("Debug Sensors: "));
+  Serial.print("Debug Sensors: ");
   Serial.println(DEBUG_SENSORS);
-  Serial.println(F("**\n"));
+  Serial.println("**\n");
 
   stampTimeWriten = millis(); // Inicializa o tempo do stamp de tempo para gravar dados na eeprom
 
@@ -937,63 +784,15 @@ void setup()
 
   lastState = digitalRead(GPIO_BOTAO);
 }
+//! ****************************************************************************************************************************************
 
+//! Loop
 void loop()
 {
-  // DataCollect();
-  // now = millis();
-
-  // if ((timestamp_ultimo_acionamento > now) || (timestamp_pos > now))
-  // {
-
-  //   timestamp_ultimo_acionamento = now;
-  //   timestamp_pos = now;
-  // }
-
-  // /* Conta acionamentos do botão considerando debounce */
-  // bool state = digitalRead(GPIO_BOTAO);
-
-  // if ((state == 0)&&(lastState == 1)) // Borda de descida
-  // {
-  //   Serial.println(".");
-  //   if ((now - timestamp_ultimo_acionamento) > 1800)
-  //   {
-  //     ltrs = ltrs + 1.00;
-  //     timestamp_ultimo_acionamento = now;
-  //     timestamp_pos = now;
-  //     blocked = false;
-  //     Serial.printf(">>>Valor de LTRS NOVA UPDATE: %f>>>\n", ltrs);
-  //     lastState = state;
-  //   }
-  // }
-
-  // int buttonState = digitalRead(4);
-
-  // Verifica se houve uma mudança de estado do pino
-  // if (state != lastState)
-  // {
-  // Reseta o tempo do debounce
-  //   timestamp_ultimo_acionamento = now;
-  // }
-
-  // Verifica se o debounce já passou
-  // if ((now - timestamp_ultimo_acionamento) > 1800)
-  // {
-  // Se o estado mudou e está em nível baixo
-  //   if (state == LOW && lastState == HIGH)
-  //   {
-  //     ltrs++; // Incrementa a variável ltrs
-  //     Serial.printf(">>>Valor de LTRS NOVA UPDATE: %f>>>\n", ltrs);
-  //     lastState = state;
-  //   }
-  // }
-
   // Atualiza o estado anterior do botão
 
   if (ltrs != ltrsAnterior)
   {
-    // Chama a função para imprimir a informação apenas quando houver uma nova atualização
-    // printInfo(ltrs);
     Serial.printf(">>>Valor de LTRS NOVA UPDATE: %f>>>\n", ltrs);
     // Atualiza o valor anterior de ltrs
     ltrsAnterior = ltrs;
@@ -1001,7 +800,7 @@ void loop()
 
   if (wm_nonblocking)
   {
-    wm.process(); // avoid delays() in loop when non-blocking and other long running code
+    wm.process(); 
   }
 
   // Realiza a leitura de um pacote do LoRa
@@ -1020,10 +819,6 @@ void loop()
   {
     findSensorsTimer = now;
 
-    // currentSensorAdc = esp_adc_cal_raw_to_voltage(adc1_get_raw(ADC1_CHANNEL_6), &adc1_chars);
-
-    // currentSensorAdc = 0;
-
     for (int i = 0; i < 100; i++)
     {
       currentSensorAdc += esp_adc_cal_raw_to_voltage(adc1_get_raw(ADC1_CHANNEL_6), &adc1_chars); //* Ajuste dos valores analógicos (cálculo de não-linearidade)
@@ -1031,22 +826,12 @@ void loop()
     }
     currentSensorAdc /= 100;
 
-    // Serial.printf("currentSensorAdc: %i", currentSensorAdc);
     double in_min = 192;
     double in_max = 4096;
     depth = setDepth - (((currentSensorAdc - in_min) * (TOMAX - TOMIN)) / ((in_max - in_min) + TOMIN));
     Serial.printf("CurrentSensorAdc: %d mV, Raw: %i, Depth: %fm", currentSensorAdc, adc1_get_raw(ADC1_CHANNEL_6), depth);
     Serial.println();
   }
-
-  // if (counterPulsesOld < counterPulses)
-  // {
-  //   int dif = counterPulses - counterPulsesOld;
-  //   dif = dif * multLtrs;
-  //   ltrs = dif + ltrs;
-  //   counterPulsesOld = counterPulses;
-  //   Serial.printf("\n Litros Acumulado: %f\n", ltrs);
-  // }
 
   if (ltrsBurned != ltrs)
   {
@@ -1060,19 +845,7 @@ void loop()
       ltrsBurned = ltrs;
       stampTimeWriten = millis();
     }
-    // Serial.printf("Valor de LTRS (if burned): %f\n", ltrs);
   }
-
-  // unsigned long now  = 0;
-  // now = millis();
-
-  // Realiza a busca de novos sensores entre um intervalo
-  // de tempo, 10 segundos
-  /* if ((now - findSensorsTimer) > 10000)
-   {
-     temp->findSensors();
-     findSensorsTimer = now;
-   }*/
 
   // Se o station ficar muito tempo sem receber mensagem, 15 min, ele é reiniciado
   if ((now - restartTimer) > 900000)
