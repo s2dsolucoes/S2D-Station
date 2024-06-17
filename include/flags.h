@@ -1,7 +1,4 @@
 // Macros para gerar string de flags
-
-#ifndef BBFB17F8_26CA_49EB_A223_FEF72E4D5E4F
-#define BBFB17F8_26CA_49EB_A223_FEF72E4D5E4F
 #define STRINGIFY(s) STRINGIFY1(s)
 #define STRINGIFY1(s) #s
 
@@ -16,15 +13,7 @@
 #define ST_WRITE_ID 0
 #endif
 
-// Define a flag de debug
-#ifndef DEBUG
-#define DEBUG 0
-#endif
-
 // Define a flag de debug dos sensores
 #ifndef DEBUG_SENSORS
 #define DEBUG_SENSORS 0
 #endif
-
-
-#endif /* BBFB17F8_26CA_49EB_A223_FEF72E4D5E4F */
