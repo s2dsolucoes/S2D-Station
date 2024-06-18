@@ -2,7 +2,7 @@
 
 AESMessage aes;       // Criptografia AES 128 CBC
 EEPROMStorage eeprom; // Ler e escrever na EEPROM
-Temperature *temp;     // Sensores de temperatura
+Temperature *temp;    // Sensores de temperatura
 
 #define BAND 915E6
 
@@ -96,10 +96,13 @@ void atualizarOTA()
       }
       http.end();
 
-      if ((Update.end(true)) && DEBUG)
+      if (Update.end(true))
       {
-        Serial.print(("\nSDIP-01 Atualizado para Versão: "));
-        Serial.println(newVersion);
+        if (DEBUG)
+        {
+          Serial.print(("\nSDIP-01 Atualizado para Versão: "));
+          Serial.println(newVersion);
+        }
 
         // Verifica se a versão armazenada é diferente da nova
         int stored_num_version = EEPROM.readInt(VERSION_NUM_POS);
