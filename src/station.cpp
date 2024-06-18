@@ -226,7 +226,7 @@ String getParam(String name)
     value = wm.server->arg(name); // O valor da variavel 'name' é atrubuido a variavel 'value'
   }
   return value;
-}//! ****************************************************************************************************************************************
+} //! ****************************************************************************************************************************************
 
 //! ****************************************************************************************************************************************
 void saveParamCallback()
@@ -622,11 +622,12 @@ void atualizarOTA()
 
       if (Update.end(true))
       {
-        Serial.println();
-        Serial.print(F("SDIP-01 Atualizado para Versao:"));
-        Serial.println();
-        Serial.print(F("Endpoint Message"));
-        Serial.println();
+        if (DEBUG)
+        {
+          Serial.println();
+          Serial.print("SDIP-01 Atualizado para Versao:");
+          Serial.println(newVersion);
+        }
 
         // Verifica se a versão armazenada é diferente da nova
         int stored_num_version = EEPROM.readInt(VERSION_NUM_POS);
@@ -800,7 +801,7 @@ void loop()
 
   if (wm_nonblocking)
   {
-    wm.process(); 
+    wm.process();
   }
 
   // Realiza a leitura de um pacote do LoRa
