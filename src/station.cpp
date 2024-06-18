@@ -198,10 +198,12 @@ void atualizarOTA()
 
       if (Update.end(true))
       {
-        Serial.println();
-        Serial.print(F("SDIP-01 Atualizado para Versao:"));
-        Serial.println(newVersion);
-        Serial.println(F("Endpoint Message"));
+        if (DEBUG)
+        {
+          Serial.println();
+          Serial.print("SDIP-01 Atualizado para Versao: ");
+          Serial.println(newVersion);
+        }
 
         // Verifica se a versão armazenada é diferente da nova
         int stored_num_version = EEPROM.readInt(VERSION_NUM_POS);
