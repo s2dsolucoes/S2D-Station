@@ -11,11 +11,11 @@ Temperature *temp;    // Sensores de temperatura
 
 // Mensagem para a temperatura de um sensor
 // Ex: {"id":"243NB4GX","id_sensor":12345,"temp":18.69}
-const char *TEMP_RESPONSE = "{\"id\":\"%s\",\"id_sensor\":%d,\"temp\":%.2f}";
+const char *TEMP_RESPONSE = "{\"id\":\"%s\",\"id_sensor\":\"%d\",\"temp\":\"%.2f\"}";
 
 // Mensagem para a quantidade de sensores disponíveis
 // Ex: {"id":"12345678",""type":1,"num_sensor":4}
-const char *NUM_SENSORS_RESPONSE = "{\"id\":\"%s\",\"type\":\"%s\",\"num_sensor\":%d}";
+const char *NUM_SENSORS_RESPONSE = "{\"id\":\"%s\",\"type\":\"%s\",\"num_sensor\":\"%d\"}";
 
 // Mensagem com ok
 // Ex: {"id":"12345678","message":"OK"}
@@ -55,14 +55,6 @@ void atualizarOTA()
     Serial.println(("---------------------------------------"));
   }
 
-  // sprintf(endpointMessageUPD, MESSAGE_MASK, "UPD_STARTED");
-
-  // publishCfg(endpointMessageUPD);
-  // Serial.println();
-  // Serial.print(("endpointMessageUPD: "));
-  // Serial.print(endpointMessageUPD);
-  // Serial.println();
-
   HTTPClient http;
 
   String url = servidorOTA.c_str();
@@ -84,7 +76,7 @@ void atualizarOTA()
           {
             if ((Update.write(buffer, len) != len) && DEBUG)
             {
-              Serial.println(("Erro na escrita durante a update!!"));
+              Serial.println("Erro na escrita durante a update!!");
               break;
             }
           }
@@ -109,6 +101,7 @@ void atualizarOTA()
         if (newVersion != stored_num_version)
         {
           EEPROM.writeInt(VERSION_NUM_POS, newVersion);
+          delay(300);
           EEPROM.commit();
         }
         delay(4000);
@@ -118,7 +111,7 @@ void atualizarOTA()
       {
         if (DEBUG)
         {
-          Serial.println(("Erro ao finalizar update!"));
+          Serial.println("Erro ao finalizar update!");
         }
       }
     }
@@ -126,7 +119,7 @@ void atualizarOTA()
     {
       if (DEBUG)
       {
-        Serial.println(("Erro ao iniciar update!"));
+        Serial.println("Erro ao iniciar update!");
       }
     }
   }
@@ -134,7 +127,7 @@ void atualizarOTA()
   {
     if (DEBUG)
     {
-      Serial.println(("Erro na conexão HTTP!"));
+      Serial.println("Erro na conexão HTTP!");
     }
   }
 }
@@ -321,6 +314,17 @@ void parsePackage()
       {
         hasLoRaConnection = true;
         startRequest();
+        return;
+      }
+
+      if (strcmp(message, "UPDATE") == 0)
+      {
+        if (DEBUG)
+        {
+          Serial.print("update enviado para o station!!!");
+        }
+        delay(200);
+        atualizarOTA();
         return;
       }
 
