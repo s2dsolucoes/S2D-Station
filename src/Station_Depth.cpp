@@ -13,11 +13,11 @@ TaskHandle_t tskDataCollect;
 
 // Mensagem para a profundidade e leitura de metros cubicos de um sensor
 // Ex: {"id":"561XS8FR","id_depth": 16548, }
-const char *DEPTH_RESPONSE = "{\"id\":\"%s\",\"id_sensor\":%d,\"ltrs\":%.3lf,\"id_sensor2\":%d,\"depth\":%.2f}";
+const char *DEPTH_RESPONSE = "{\"id\":\"%s\",\"id_sensor\":\"%d\",\"ltrs\":\"%.3lf\",\"id_sensor2\":\"%d\",\"depth\":\"%.2f\"}";
 
 // Mensagem para a quantidade de sensores disponíveis
 // Ex: {"id":"12345678","num_sensor":4}
-const char *NUM_SENSORS_RESPONSE = "{\"id\":\"%s\",\"type\":\"%s\",\"num_sensor\":%d}";
+const char *NUM_SENSORS_RESPONSE = "{\"id\":\"%s\",\"type\":\"%s\",\"num_sensor\":\"%d\"}";
 
 // Mensagem com ok
 // Ex: {"id":"12345678","message":"OK"}
@@ -395,6 +395,17 @@ void parsePackage()
         return;
       }
 
+      if (strcmp(message, "UPDATE") == 0)
+      {
+        if (DEBUG)
+        {
+          Serial.print("update enviado para o station!!!");
+        }
+        delay(200);
+        atualizarOTA();
+        return;
+      }
+
       // * Ocorreu algum erro, iniciar uma nova requisição
       if (strcmp(message, "ERROR") == 0)
       {
@@ -573,14 +584,16 @@ void checkButton()
 //! Atualização via OTA
 void atualizarOTA()
 {
-  Serial.println(F("---------------------------------------"));
-  Serial.println(F("------------  Update! OTA  ------------"));
-  Serial.println(F("---------------------------------------"));
-  Serial.println("Conectando em: " + String(servidorOTA));
+  if (DEBUG)
+  {
+    Serial.println(("---------------------------------------"));
+    Serial.println(("------------  Update! OTA  ------------"));
+    Serial.println("Conectando em: " + String(servidorOTA));
+    Serial.println(("---------------------------------------"));
+  }
 
   HTTPClient http;
 
-  // Especifica o URL do arquivo de update!
   String url = servidorOTA.c_str();
 
   // Inicia a conexão HTTP
@@ -598,13 +611,9 @@ void atualizarOTA()
           size_t len = stream.readBytes(buffer, sizeof(buffer));
           if (len > 0)
           {
-            if (Update.write(buffer, len) != len)
+            if ((Update.write(buffer, len) != len) && DEBUG)
             {
-              Serial.println(F("Erro na escrita durante a update!!"));
-
-              Serial.println();
-              Serial.print(F("Endpoint Message"));
-              Serial.println();
+              Serial.println("Erro na escrita durante a update!!");
               break;
             }
           }
@@ -612,11 +621,7 @@ void atualizarOTA()
       }
       else
       {
-        Serial.printf("Erro ao buscar o arquivo de update!. Código HTTP: %d\n", httpCode);
-
-        Serial.println();
-        Serial.print(F("Endpoint Message"));
-        Serial.println();
+        Serial.printf("Erro ao buscar o arquivo de update! Código HTTP: %d\n", httpCode);
       }
       http.end();
 
@@ -624,8 +629,7 @@ void atualizarOTA()
       {
         if (DEBUG)
         {
-          Serial.println();
-          Serial.print("SDIP-01 Atualizado para Versao:");
+          Serial.print(("\nSDIP-01 Atualizado para Versão: "));
           Serial.println(newVersion);
         }
 
@@ -634,6 +638,7 @@ void atualizarOTA()
         if (newVersion != stored_num_version)
         {
           EEPROM.writeInt(VERSION_NUM_POS, newVersion);
+          delay(300);
           EEPROM.commit();
         }
         delay(4000);
@@ -641,19 +646,29 @@ void atualizarOTA()
       }
       else
       {
-        Serial.println("Erro ao finalizar update!!");
+        if (DEBUG)
+        {
+          Serial.println("Erro ao finalizar update!");
+        }
       }
     }
     else
     {
-      Serial.println("Erro ao iniciar update!");
+      if (DEBUG)
+      {
+        Serial.println("Erro ao iniciar update!");
+      }
     }
   }
   else
   {
-    Serial.println("Erro na conexão HTTP!");
+    if (DEBUG)
+    {
+      Serial.println("Erro na conexão HTTP!");
+    }
   }
 }
+
 //! ****************************************************************************************************************************************
 
 /**
