@@ -137,8 +137,6 @@ void connectWifi(bool active)
     else
     {
       Serial.println("***Conectado!***\n ATUALIZANDO");
-
-      atualizarOTA();
     }
   }
   else
@@ -151,20 +149,22 @@ void connectWifi(bool active)
 //! Atualização Over the Air
 void atualizarOTA()
 {
-  Serial.println(F("---------------------------------------"));
-  Serial.println(F("------------  Update! OTA  ------------"));
-  Serial.println(F("---------------------------------------"));
-  Serial.println("Conectando em: " + String(servidorOTA));
+  if (DEBUG)
+  {
+    Serial.println(("---------------------------------------"));
+    Serial.println(("------------  Update! OTA  ------------"));
+    Serial.println("Conectando em: " + String(servidorOTA));
+    Serial.println(("---------------------------------------"));
+  }
 
   HTTPClient http;
 
-  // Especifica o URL do arquivo de update
   String url = servidorOTA.c_str();
 
   // Inicia a conexão HTTP
   if (http.begin(url))
   {
-    // Começa o update
+    // Começa o update!
     if (Update.begin(UPDATE_SIZE_UNKNOWN))
     {
       int httpCode = http.GET();
@@ -176,12 +176,9 @@ void atualizarOTA()
           size_t len = stream.readBytes(buffer, sizeof(buffer));
           if (len > 0)
           {
-            if (Update.write(buffer, len) != len)
+            if ((Update.write(buffer, len) != len) && DEBUG)
             {
-              Serial.println(F("Erro na escrita durante a update!!"));
-              Serial.println();
-              Serial.print(F("Endpoint Message"));
-              Serial.println();
+              Serial.println("Erro na escrita durante a update!!");
               break;
             }
           }
@@ -189,10 +186,7 @@ void atualizarOTA()
       }
       else
       {
-        Serial.printf("Erro ao buscar o arquivo de update!. Código HTTP: %d\n", httpCode);
-        Serial.println();
-        Serial.print(F("Endpoint Message"));
-        Serial.println();
+        Serial.printf("Erro ao buscar o arquivo de update! Código HTTP: %d\n", httpCode);
       }
       http.end();
 
@@ -200,8 +194,7 @@ void atualizarOTA()
       {
         if (DEBUG)
         {
-          Serial.println();
-          Serial.print("SDIP-01 Atualizado para Versao: ");
+          Serial.print(("\nSDIP-01 Atualizado para Versão: "));
           Serial.println(newVersion);
         }
 
@@ -210,6 +203,7 @@ void atualizarOTA()
         if (newVersion != stored_num_version)
         {
           EEPROM.writeInt(VERSION_NUM_POS, newVersion);
+          delay(300);
           EEPROM.commit();
         }
         delay(4000);
@@ -217,17 +211,26 @@ void atualizarOTA()
       }
       else
       {
-        Serial.println("Erro ao finalizar update!!");
+        if (DEBUG)
+        {
+          Serial.println("Erro ao finalizar update!");
+        }
       }
     }
     else
     {
-      Serial.println("Erro ao iniciar update!");
+      if (DEBUG)
+      {
+        Serial.println("Erro ao iniciar update!");
+      }
     }
   }
   else
   {
-    Serial.println("Erro na conexão HTTP!");
+    if (DEBUG)
+    {
+      Serial.println("Erro na conexão HTTP!");
+    }
   }
 }
 //! *******************************************************************************************************************************************************
@@ -403,6 +406,18 @@ void parsePackage()
         }
         return;
       }
+
+      if (strcmp(message, "UPDATE") == 0)
+      {
+        if (DEBUG)
+        {
+          Serial.print("update enviado para o station!!!");
+        }
+        delay(200);
+        atualizarOTA();
+        return;
+      }
+
       //* Inicia a requisição dos dados
       if (strcmp(message, "START_REQUEST") == 0)
       {

@@ -92,7 +92,7 @@ const char *TAG = "MAIN";
 
 // Mensagem que informa a pressão de dois sensores
 // Ex: {"id":"561XS8FR","id_sensor": 0001, "pressure1": 21, "pressure2": 23}
-const char *PRESSURE_RESPONSE = "{\"id\":\"%s\",\"id_sensor\":%d,\"pressure1\":%.2f,\"pressure2\":%.2f}";
+const char *PRESSURE_RESPONSE = "{\"id\":\"%s\",\"id_sensor\":\"%d\",\"pressure1\":\"%.2f\",\"pressure2\":\"%.2f\"}";
 
 // Mensagem para a quantidade de sensores disponíveis
 // Ex: {"id":"12345678","num_sensor":4}
