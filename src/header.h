@@ -1,12 +1,10 @@
-#ifndef D3571EED_18B1_4859_9C11_F05DE0B2AE33
-#define D3571EED_18B1_4859_9C11_F05DE0B2AE33
 #include <SPI.h>
 #include <LoRa.h>
 #include <ArduinoJson.h>
 #include <string> // ? Remover ?
 #include <HTTPClient.h>
 #include <Update.h>
-
+#include <WiFiManager.h>
 #include "flags.h"
 #include "AESMessage.h"
 #include "EEPROMStorage.h"
@@ -33,4 +31,4 @@ const int bufferSize = 512; // Tamanho do buffer em bytes (pode ajustar conforme
 uint8_t buffer[bufferSize];  // Declaração do buffer como um array de bytes
 
 
-#endif /* D3571EED_18B1_4859_9C11_F05DE0B2AE33 */
+

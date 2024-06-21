@@ -32,6 +32,10 @@ char responseLoRa[256]; // Mensagem para enviar
 bool hasLoRaMsg = false;
 bool hasLoRaConnection = false; // Está trocando mensagens com o GW?
 
+//* Wifi Logic
+bool wm_nonblocking = false;
+WiFiManager wm;
+WiFiManagerParameter custom_field;
 // Controle do sensor que foi medido
 uint8_t currentSensor = 0;
 
@@ -44,6 +48,22 @@ unsigned long restartTimer = 0;
 double update;       // Versão do código a ser instalada
 void atualizarOTA(); // Função para atualizar o gateway via MQTT
 #define VERSION_NUM_POS 44
+
+String getParam(String name)
+{
+  String value;
+  if (wm.server->hasArg(name)) // Se o servidor possui um argumento representado pela variavel 'name'
+  {
+    value = wm.server->arg(name); // O valor da variavel 'name' é atrubuido a variavel 'value'
+  }
+  return value;
+}
+
+void saveParamCallback()
+{
+  Serial.println("[CALLBACK] saveParamCallback fired");
+  Serial.println("PARAM customfieldid = " + getParam("customfieldid"));
+}
 
 void atualizarOTA()
 {
@@ -267,6 +287,52 @@ void startRequest()
   sendEncryptedLoRa(responseLoRa);
 }
 
+void connectWifi(bool active)
+{
+  if (active)
+  {
+    WiFi.mode(WIFI_STA); // Set para modo station
+
+    if (wm_nonblocking)
+    {
+      wm.setConfigPortalBlocking(false);
+    }
+
+    const char *custom_radio_str = "<br/><label for='customfieldid'>Custom Field Label</label><input type='radio' name='customfieldid' value='1' checked> One<br><input type='radio' name='customfieldid' value='2'> Two<br><input type='radio' name='customfieldid' value='3'> Three";
+    new (&custom_field) WiFiManagerParameter(custom_radio_str);
+
+    wm.addParameter(&custom_field);
+    wm.setSaveParamsCallback(saveParamCallback);
+
+    std::vector<const char *> menu = {"wifi", "info", "param", "sep", "restart", "exit"};
+    wm.setMenu(menu);
+
+    // Página com tema escuro
+    wm.setClass("invert");
+
+    wm.setConnectTimeout(20);      // Tenta conectar por 20 segundos antes de abrir o portal
+    wm.setConfigPortalTimeout(60); // Fecha o portal de configuração após 1 min
+
+    bool res;
+    res = wm.autoConnect("S2D MC102", "s2dsolucoes15"); // Nome e senha da rede
+
+    if (!res)
+    {
+      Serial.println("Failed to connect or hit timeout");
+      ESP.restart();
+    }
+    else
+    {
+      Serial.println("***Conectado!***\n ATUALIZANDO");
+      atualizarOTA();
+    }
+  }
+  else
+  {
+    WiFi.disconnect(true, false);
+  }
+}
+
 /**
  * Executa a instrução recebida pelo Gateway, são dois tipos diferentes
  * de instruções que podem ser recebidas:
@@ -324,7 +390,7 @@ void parsePackage()
           Serial.print("update enviado para o station!!!");
         }
         delay(200);
-        atualizarOTA();
+        connectWifi(1);
         return;
       }
 
