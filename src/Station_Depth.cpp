@@ -272,7 +272,6 @@ void connectWifi(bool active)
     else
     {
       Serial.println("***Conectado!***\n ATUALIZANDO");
-
       atualizarOTA();
     }
   }
@@ -402,7 +401,7 @@ void parsePackage()
           Serial.print("update enviado para o station!!!");
         }
         delay(200);
-        atualizarOTA();
+        connectWifi(1);
         return;
       }
 
