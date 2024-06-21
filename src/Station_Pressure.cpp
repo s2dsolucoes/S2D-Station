@@ -127,7 +127,7 @@ void connectWifi(bool active)
     wm.setConfigPortalTimeout(60); // Fecha o portal de configuração após 1 min
 
     bool res;
-    res = wm.autoConnect("S2D MPC100", "password"); // Nome e senha da rede
+    res = wm.autoConnect("S2D MC102", "s2dsolucoes15"); // Nome e senha da rede
 
     if (!res)
     {
@@ -137,6 +137,7 @@ void connectWifi(bool active)
     else
     {
       Serial.println("***Conectado!***\n ATUALIZANDO");
+      atualizarOTA();
     }
   }
   else
@@ -414,7 +415,7 @@ void parsePackage()
           Serial.print("update enviado para o station!!!");
         }
         delay(200);
-        atualizarOTA();
+        connectWifi(1);
         return;
       }
 
