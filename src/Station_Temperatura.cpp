@@ -36,6 +36,7 @@ bool hasLoRaConnection = false; // Está trocando mensagens com o GW?
 bool wm_nonblocking = false;
 WiFiManager wm;
 WiFiManagerParameter custom_field;
+
 // Controle do sensor que foi medido
 uint8_t currentSensor = 0;
 
@@ -48,6 +49,9 @@ unsigned long restartTimer = 0;
 double update;       // Versão do código a ser instalada
 void atualizarOTA(); // Função para atualizar o gateway via MQTT
 #define VERSION_NUM_POS 44
+
+
+bool hasChanges = false;
 
 String getParam(String name)
 {
@@ -367,6 +371,7 @@ void parsePackage()
   const char *new_id = doc["new_id"];
   const char *message = doc["message"];
   int msg_num = doc["msg_num"];
+  bool wifiMode = doc["wifiMode"];
 
   // A instrução é para esse station?
   if (strcmp(stationId, id) == 0)
@@ -380,17 +385,6 @@ void parsePackage()
       {
         hasLoRaConnection = true;
         startRequest();
-        return;
-      }
-
-      if (strcmp(message, "UPDATE") == 0)
-      {
-        if (DEBUG)
-        {
-          Serial.print("update enviado para o station!!!");
-        }
-        delay(200);
-        connectWifi(1);
         return;
       }
 
@@ -435,6 +429,23 @@ void parsePackage()
       {
         startRequest();
         return;
+      }
+
+      if (wifiMode == 1)
+      {
+        Serial.println("\n***Wifi Habilitado!***\n");
+        sprintf(responseLoRa, MESSAGE_RESPONSE, stationId, "OK");
+        sendEncryptedLoRa(responseLoRa);
+        connectWifi(1);
+        hasChanges = true;
+      }
+      else if (wifiMode == 2)
+      {
+        Serial.printf("\n***Wifi Desabilitado!***\n");
+        connectWifi(false);
+        hasChanges = true;
+        sprintf(responseLoRa, MESSAGE_RESPONSE, stationId, "OK");
+        sendEncryptedLoRa(responseLoRa);
       }
     }
 
