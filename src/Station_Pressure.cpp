@@ -408,17 +408,6 @@ void parsePackage()
         return;
       }
 
-      if (strcmp(message, "UPDATE") == 0)
-      {
-        if (DEBUG)
-        {
-          Serial.print("update enviado para o station!!!");
-        }
-        delay(200);
-        connectWifi(1);
-        return;
-      }
-
       //* Inicia a requisição dos dados
       if (strcmp(message, "START_REQUEST") == 0)
       {
