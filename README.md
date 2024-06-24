@@ -52,3 +52,51 @@ Essas flags definem certos comportamentos como também a identificação do Gate
 
 -DST_WRITE_ID 		# Escreve o id na EEPROM ao iniciar
 ```
+
+# Atualização via OTA
+## 1. Preparação do Arquivo de Firmware
+
+1. Obtenha o arquivo de firmware mais recente e atualizado.
+2. Abra o Visual Studio Code (VSCode).
+3. Realize a build do projeto no VSCode.
+4. Navegue até o diretório `.pio/build/esp-station`.
+5. Copie o arquivo `firmware.bin` gerado para a pasta `firmwares`.
+
+## 2. Transferência do Firmware para o Servidor
+
+1. Abra o Putty e conecte-se ao servidor.
+2. Faça login no servidor.
+3. Acesse a root do servidor utilizando o comando:
+
+    ```bash
+    sudo su
+    ```
+
+4. Copie o arquivo `firmware.bin` para o local correto no servidor com o comando:
+
+    ```bash
+    cp /arquivos/firmwares/firmware.bin /var/www/sistemas/public/
+    ```
+
+## 3. Configuração via MQTT
+
+1. Acesse o MQTT.
+2. Navegue até o gateway que você deseja atualizar.
+3. Entre no tópico `cfg` do gateway, de modo que o caminho fique:
+
+    ```text
+    s2d/cg19g/*gateway que gerencia o station que queremos atualizar*/cfg
+    ```
+
+4. Envie o seguinte comando via MQTT para iniciar a atualização:
+
+    ```json
+    {
+      "id_gateway": *id do gateway que gerencia o station*,
+      "id": *id do station que será atualizado*,
+      "wifiMode": 1
+    }
+    ```
+
+## 4. Finalização
+O station ativará sua conexão WiFi e se atualizará via OTA, desligando o WiFi assim que a atualização estiver completa.

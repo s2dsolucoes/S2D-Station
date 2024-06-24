@@ -22,20 +22,20 @@ bool wm_nonblocking = false;
 WiFiManager wm;
 WiFiManagerParameter custom_field;
 
-// Controle LoRa
-char LoRaMsg[256];              // Mensagem recebida
-char responseLoRa[256];         // Mensagem para enviar
-bool hasLoRaMsg = false;        // Recebeu uma mensagem LoRa
-bool hasLoRaConnection = false; // Está trocando mensagens com o GW?
+//* Controle LoRa
+char LoRaMsg[256];              //* Mensagem recebida
+char responseLoRa[256];         //* Mensagem para enviar
+bool hasLoRaMsg = false;        //* Recebeu uma mensagem LoRa
+bool hasLoRaConnection = false; //* Está trocando mensagens com o GW?
 
-// Controle do sensor que foi medido
+//* Controle do sensor que foi medido
 uint8_t currentSensor = 0;
 
-// Controle da busca de novos sensores
+//* Controle da busca de novos sensores
 unsigned long findSensorsTimer = 0;
 
-unsigned long now = 0; // Variavel que pega o valor do millis
-bool lastState = 0;    // Variavel de teste para coletar dados do pino
+unsigned long now = 0; //* Variavel que pega o valor do millis
+bool lastState = 0;    //* Variavel de teste para coletar dados do pino
 
 bool hasChanges = false;
 
@@ -55,27 +55,27 @@ double corrente2 = 0.00;
 double corrente_err1 = 0.00;
 double corrente_err2 = 0.00;
 int sensorId = 0001;
-Adafruit_INA219 sens_pressure_1(0x40); // Sensor de Pressão INA219
-Adafruit_INA219 sens_pressure_2(0x41); // Sensor de Pressão INA219
+Adafruit_INA219 sens_pressure_1(0x40); //* Sensor de Pressão INA219
+Adafruit_INA219 sens_pressure_2(0x41); //* Sensor de Pressão INA219
 //****************************
 
-volatile bool subidaDetectada = false;  // Variável para indicar detecção de borda de subida
-volatile bool descidaDetectada = false; // Variável para indicar detecção de borda de descida
-unsigned long ultimaSubida = 0;         // Último tempo de detecção de borda de subida
-unsigned long ultimaDescida = 0;        // Último tempo de detecção de borda de descida
-unsigned long intervaloMinimo = 500;    // Intervalo mínimo entre bordas de subida e descida (em milissegundos)
+volatile bool subidaDetectada = false;  //* Variável para indicar detecção de borda de subida
+volatile bool descidaDetectada = false; //* Variável para indicar detecção de borda de descida
+unsigned long ultimaSubida = 0;         //* Último tempo de detecção de borda de subida
+unsigned long ultimaDescida = 0;        //* Último tempo de detecção de borda de descida
+unsigned long intervaloMinimo = 500;    //* Intervalo mínimo entre bordas de subida e descida (em milissegundos)
 
-// Timeout para reiniciar o ESP
+//* Timeout para reiniciar o ESP
 unsigned long restartTimer = 0;
 
-// Acionamentos
+//* Acionamentos
 int contador_acionamentos = 0;
 unsigned long timestamp_ultimo_acionamento = 0;
 unsigned long timestamp_pos = 0;
 
 int counter = 0;
 
-// Função para atualizar a versão do dispositivo via LoRa
+//* Função para atualizar a versão do dispositivo via LoRa
 void atualizarOTA();
 //! *******************************************************************************************************************************************************
 
@@ -83,9 +83,9 @@ void atualizarOTA();
 String getParam(String name)
 {
   String value;
-  if (wm.server->hasArg(name)) // Se o servidor possui um argumento representado pela variavel 'name'
+  if (wm.server->hasArg(name)) //* Se o servidor possui um argumento representado pela variavel 'name'
   {
-    value = wm.server->arg(name); // O valor da variavel 'name' é atrubuido a variavel 'value'
+    value = wm.server->arg(name); //* O valor da variavel 'name' é atrubuido a variavel 'value'
   }
   return value;
 }
@@ -669,13 +669,13 @@ void setup()
   EEPROM.begin(256);
 
   //* Ativa os sensores de pressão
-  if (!sens_pressure_1.begin() || !sens_pressure_2.begin())
+  while ((!sens_pressure_1.begin()) || (!sens_pressure_2.begin()))
   {
-    Serial.println("Failed to find INA219 chip");
-    while (1)
+    if (DEBUG)
     {
-      delay(10);
+      Serial.println("Failed to find INA219 chip");
     }
+    delay(200);
   }
 
   sens_pressure_1.setCalibration_32V_1A();
@@ -698,8 +698,8 @@ void setup()
 
   while (!LoRa.begin(BAND))
   {
-    Serial.println(F("."));
-    vTaskDelay(500 / portTICK_PERIOD_MS);
+    Serial.println(".");
+    delay(500);
   }
   Serial.println("LoRa Initializing OK!");
 
