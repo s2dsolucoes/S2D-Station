@@ -12,7 +12,7 @@ TaskHandle_t tskDataCollect;
 // * Esqueletos de mensagens frequentementes usadas na comunicação
 
 // Mensagem para a profundidade e leitura de metros cubicos de um sensor
-// Ex: {"id":"561XS8FR","id_depth": 16548, }
+// Ex: {"id":"561XS8FR","id_sensor": "0001", "ltrs": "25689.541", "id_sensor2": "0002", "depth": "86.54"}
 const char *DEPTH_RESPONSE = "{\"id\":\"%s\",\"id_sensor\":\"%d\",\"ltrs\":\"%.3lf\",\"id_sensor2\":\"%d\",\"depth\":\"%.2f\"}";
 
 // Mensagem para a quantidade de sensores disponíveis
