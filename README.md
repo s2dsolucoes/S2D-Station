@@ -1,4 +1,4 @@
-# ESP8266 Station
+# ESP32 Station
 
 O Station tem como objetivo realizar a captura das temperaturas com sensores e enviar ao gateway quando solicitado. Essa solicitação é realizada usando comunicação LoRa.
 
@@ -31,7 +31,7 @@ Resposta com a quantidade de sensores no station.
 Resposta a temperatura de um determinado sensor.
 
 ```js
-{"id":"243NB4GX","id_sensor":12345,"temp":18.69}
+{"id":"243NB4GX","id_sensor":640546,"temp":25.69}
 ```
 
 Resposta com mensagem para o Gateway.
@@ -51,6 +51,9 @@ Essas flags definem certos comportamentos como também a identificação do Gate
 -DDEBUG_SENSORS		# Ativa modo debug dos sensores
 
 -DST_WRITE_ID 		# Escreve o id na EEPROM ao iniciar
+
+-DTYPESENSOR        # Identifica o tipo do sensor (que dados ele envia)
+-DVERSION           # Informa a versão do dispositivo
 ```
 
 # Atualização via OTA
