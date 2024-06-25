@@ -1,10 +1,10 @@
-# ESP8266 Station
+# ESP32 Station
 
-O Station tem como objetivo realizar a captura das temperaturas com sensores e enviar ao gateway quando solicitado. Essa solicitação é realizada usando comunicação LoRa.
+O Station tem como objetivo realizar a captura das pressões e enviar ao gateway quando solicitado. Essa solicitação é realizada usando comunicação LoRa.
 
 # LoRa
 
-A comunicação do Station com o Gateway é realizada através do LoRa, usando a criptografia AES-128-CBC para cifrar os dados comunicados.
+A comunicação do Station com o Gateway é realizada através do LoRa, usando a criptografia AES-128-CBC para criptografar os dados comunicados.
 
 ## Mensagens recebidas
 
@@ -14,7 +14,7 @@ Muda o identificador de um Station, responde um OK ou ERRO.
 {"id":"XXXX","new_id":"YYYY"}
 ```
 
-Dá inicio as requisições das temperaturas, deve responder com o número de sensores.
+Dá inicio as requisições das pressões, deve responder com o número de sensores.
 
 ```js
 {"id": "12345678", "message": "START_REQUEST"}
@@ -28,10 +28,10 @@ Resposta com a quantidade de sensores no station.
 {"id":"12345678","num_sensor":4}
 ```
 
-Resposta a temperatura de um determinado sensor.
+Responde com a pressão lida por um determinado sensor.
 
 ```js
-{"id":"243NB4GX","id_sensor":12345,"temp":18.69}
+{"id":"561XS8FR","id_sensor": 0001, "pressure1": 6.14, "pressure2": 12.28}
 ```
 
 Resposta com mensagem para o Gateway.
@@ -51,6 +51,9 @@ Essas flags definem certos comportamentos como também a identificação do Gate
 -DDEBUG_SENSORS		# Ativa modo debug dos sensores
 
 -DST_WRITE_ID 		# Escreve o id na EEPROM ao iniciar
+
+-DVERSION           # Informa a versão atual do Station
+-DTYPESENSOR        # Informa o tipo do sensor (qual tipo de dados ele envia)  
 ```
 
 # Atualização via OTA

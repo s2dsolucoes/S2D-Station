@@ -152,20 +152,20 @@ void atualizarOTA()
 {
   if (DEBUG)
   {
-    Serial.println(("---------------------------------------"));
-    Serial.println(("------------  Update! OTA  ------------"));
+    Serial.println("---------------------------------------");
+    Serial.println("------------  Update! OTA  ------------");
     Serial.println("Conectando em: " + String(servidorOTA));
-    Serial.println(("---------------------------------------"));
+    Serial.println("---------------------------------------");
   }
 
   HTTPClient http;
 
   String url = servidorOTA.c_str();
 
-  // Inicia a conexão HTTP
+  //* Inicia a conexão HTTP
   if (http.begin(url))
   {
-    // Começa o update!
+    //* Começa o update!
     if (Update.begin(UPDATE_SIZE_UNKNOWN))
     {
       int httpCode = http.GET();
@@ -199,7 +199,7 @@ void atualizarOTA()
           Serial.println(newVersion);
         }
 
-        // Verifica se a versão armazenada é diferente da nova
+        //* Verifica se a versão armazenada é diferente da nova
         int stored_num_version = EEPROM.readInt(VERSION_NUM_POS);
         if (newVersion != stored_num_version)
         {
