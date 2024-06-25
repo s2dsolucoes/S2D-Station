@@ -446,24 +446,33 @@ void parsePackage()
           return;
         }
       }
+      //* Finaliza as requisições
+      if (strcmp(message, "END_REQUEST") == 0)
+      {
+        hasLoRaConnection = false;
+        return;
+      }
+
+      //* Ocorreu algum erro, iniciar uma nova requisição
+      if (strcmp(message, "ERROR") == 0)
+      {
+        startRequest();
+        return;
+      }
+
+      if (strcmp(message, "RESET") == 0)
+      {
+        if (DEBUG)
+        {
+          Serial.println("Resetando o station...");
+        }
+        delay(500);
+        ESP.restart();
+      }
     }
     //* Algum sensor foi removido ou o station reiniciou durante o processo de comunicação
     sprintf(responseLoRa, MESSAGE_RESPONSE, stationId, "OK");
     sendEncryptedLoRa(responseLoRa);
-
-    //* Finaliza as requisições
-    if (strcmp(message, "END_REQUEST") == 0)
-    {
-      hasLoRaConnection = false;
-      return;
-    }
-
-    //* Ocorreu algum erro, iniciar uma nova requisição
-    if (strcmp(message, "ERROR") == 0)
-    {
-      startRequest();
-      return;
-    }
 
     //* Ativa ou desativa as mensagens de debug
     if (setDebug)
@@ -698,7 +707,7 @@ void setup()
 
   while (!LoRa.begin(BAND))
   {
-    Serial.println(".");
+    Serial.print(".");
     delay(500);
   }
   Serial.println("LoRa Initializing OK!");
