@@ -330,6 +330,7 @@ void parsePackage()
   double multLtrsValue = doc["multLtrsValue"];
   int wifiMode = doc["wifiMode"];
   bool setDebug = doc["debug"];
+  bool reset = doc["reset"];
 
   // A instrução é para esse station?
   if (strcmp(stationId, id) == 0)
@@ -400,15 +401,18 @@ void parsePackage()
         startRequest();
         return;
       }
-            if (strcmp(message, "RESET") == 0)
+    }
+
+    if (reset == 1)
+    {
+      sprintf(responseLoRa, MESSAGE_RESPONSE, stationId, "OK");
+      sendEncryptedLoRa(responseLoRa);
+      if (DEBUG)
       {
-        if (DEBUG)
-        {
-          Serial.println("Resetando o station...");
-        }
-        delay(500);
-        ESP.restart();
+        Serial.println("Resetando o station...");
       }
+      delay(500);
+      ESP.restart();
     }
 
     // * Ativa ou desativa as mensagens de debug
