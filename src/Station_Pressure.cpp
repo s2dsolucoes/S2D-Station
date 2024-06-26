@@ -387,6 +387,7 @@ void parsePackage()
   double out_min = doc["out_min"];
   int wifiMode = doc["wifiMode"];
   bool setDebug = doc["debug"];
+  bool reset = doc["reset"];
 
   //* ID's conferem?
   if (strcmp(stationId, id) == 0)
@@ -459,20 +460,23 @@ void parsePackage()
         startRequest();
         return;
       }
-
-      if (strcmp(message, "RESET") == 0)
-      {
-        if (DEBUG)
-        {
-          Serial.println("Resetando o station...");
-        }
-        delay(500);
-        ESP.restart();
-      }
     }
+    
     //* Algum sensor foi removido ou o station reiniciou durante o processo de comunicação
     sprintf(responseLoRa, MESSAGE_RESPONSE, stationId, "OK");
     sendEncryptedLoRa(responseLoRa);
+
+    if (reset == 1)
+    {
+      sprintf(responseLoRa, MESSAGE_RESPONSE, stationId, "OK");
+      sendEncryptedLoRa(responseLoRa);
+      if (DEBUG)
+      {
+        Serial.println("Resetando o station...");
+      }
+      delay(500);
+      ESP.restart();
+    }
 
     //* Ativa ou desativa as mensagens de debug
     if (setDebug)
