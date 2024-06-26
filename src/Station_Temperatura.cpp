@@ -371,6 +371,7 @@ void parsePackage()
   const char *message = doc["message"];
   int msg_num = doc["msg_num"];
   bool wifiMode = doc["wifiMode"];
+  bool reset = doc["reset"];
 
   // A instrução é para esse station?
   if (strcmp(stationId, id) == 0)
@@ -428,6 +429,18 @@ void parsePackage()
       {
         startRequest();
         return;
+      }
+
+      if (reset == 1)
+      {
+        sprintf(responseLoRa, MESSAGE_RESPONSE, stationId, "OK");
+        sendEncryptedLoRa(responseLoRa);
+        if (DEBUG)
+        {
+          Serial.println("Resetando o station...");
+        }
+        delay(500);
+        ESP.restart();
       }
 
       if (wifiMode == 1)
