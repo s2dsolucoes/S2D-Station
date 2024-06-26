@@ -50,7 +50,6 @@ double update;       // Versão do código a ser instalada
 void atualizarOTA(); // Função para atualizar o gateway via MQTT
 #define VERSION_NUM_POS 44
 
-
 bool hasChanges = false;
 
 String getParam(String name)
@@ -446,6 +445,15 @@ void parsePackage()
         hasChanges = true;
         sprintf(responseLoRa, MESSAGE_RESPONSE, stationId, "OK");
         sendEncryptedLoRa(responseLoRa);
+      }
+      if (strcmp(message, "RESET") == 0)
+      {
+        if (DEBUG)
+        {
+          Serial.println("Resetando o station...");
+        }
+        delay(500);
+        ESP.restart();
       }
     }
 
