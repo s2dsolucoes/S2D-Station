@@ -400,6 +400,15 @@ void parsePackage()
         startRequest();
         return;
       }
+            if (strcmp(message, "RESET") == 0)
+      {
+        if (DEBUG)
+        {
+          Serial.println("Resetando o station...");
+        }
+        delay(500);
+        ESP.restart();
+      }
     }
 
     // * Ativa ou desativa as mensagens de debug
