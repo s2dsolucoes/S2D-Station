@@ -4,9 +4,16 @@ AESMessage aes; // Criptografia AES 128 CBC
 
 #define BAND 915E6
 
-TaskHandle_t tskComunicate;
-
-TaskHandle_t tskDataCollect;
+#define ID_POSITION 0
+#define LTRS_POSITION 18
+#define DEPTH_OUT_MAX_POS 24
+#define DEPTH_OUT_MIN_POS 32
+#define DEPTH_POS 36
+#define VERSION_NUM_POS 44 // Posição Informação de Versão
+#define MULT_LTRS_POS 50
+#define DEPTH_IN_MIN_POS 55
+#define DEPTH_IN_MAX_POS 60
+#define ID_LEN 9 // Tamanho ID
 
 // *****************************************************************
 // * Esqueletos de mensagens frequentementes usadas na comunicação
@@ -50,22 +57,11 @@ bool lastState = 0;    // Variavel de teste para coletar dados do pino
 
 double ltrsBurned;
 
-double TOMAX = 0.00;
-double TOMIN = 0.00;
+double depth_out_max = 0.00;
+double depth_out_min = 0.00;
 bool hasChanges = false;
 double setDepth = 0.00;
 double multLtrs = 0.00;
-
-// unsigned long counterPulses;
-
-#define ID_POSITION 0
-#define LTRS_POSITION 18
-#define TO_MAX_POS 24
-#define TO_MIN_POS 32
-#define DEPTH_POS 36
-#define VERSION_NUM_POS 44 // Posição Informação de Versão
-#define MULT_LTRS_POS 50
-#define ID_LEN 9 // Tamanho ID
 
 volatile bool subidaDetectada = false;  // Variável para indicar detecção de borda de subida
 volatile bool descidaDetectada = false; // Variável para indicar detecção de borda de descida
@@ -79,8 +75,12 @@ unsigned long restartTimer = 0;
 // Objetos Pulse Counter
 
 // Variáveis para Funcionamento ADC
-static esp_adc_cal_characteristics_t adc1_chars;
-uint32_t currentSensorAdc; // Valor ADC
+double DEPTH_IN_MIN = EEPROM.read(DEPTH_IN_MIN_POS); //! Valores a atualizar
+double DEPTH_IN_MAX = EEPROM.read(DEPTH_IN_MAX_POS); //! Valores a atualizar
+double DEPTH_OUT_MIN = 0;                            //! Valores a atualizar
+double DEPTH_OUT_MAX = 9.65;                         //! Valores a atualizar
+double corrente = 0;
+Adafruit_INA219 sens_pressure_1(0x40); //* Sensor de Pressão INA219
 double depth;
 
 int16_t count = 0;
@@ -323,8 +323,10 @@ void parsePackage()
   const char *id = doc["id"];
   const char *new_id = doc["new_id"];
   const char *message = doc["message"];
-  double toMax = doc["toMax"];
-  double toMin = doc["toMin"];
+  double depth_out_max = doc["depth_out_max"];
+  double depth_out_min = doc["depth_out_min"];
+  double depth_in_min = doc["depth_in_min"];
+  double depth_in_max = doc["depth_in_max"];
   double setDepthValue = doc["setDepthValue"];
   double mCubics = doc["mCubics"];
   double multLtrsValue = doc["multLtrsValue"];
@@ -428,29 +430,57 @@ void parsePackage()
       sendEncryptedLoRa(responseLoRa);
     }
 
-    // * Atualiza os valores maximo
-    if (toMax)
+    //* Atualiza os valores de entrada máxima
+    if (depth_in_max)
     {
       if (DEBUG)
       {
-        Serial.printf("!!!! toMax Atualizado de %f, para %f", TOMAX, toMax);
+        Serial.printf("!!!! in_max Atualizado de %f, para %f", DEPTH_IN_MAX, depth_in_max);
       }
-      TOMAX = toMax;
-      EEPROM.writeDouble(TO_MAX_POS, toMax);
+      DEPTH_IN_MAX = depth_in_max;
+      EEPROM.writeDouble(DEPTH_IN_MAX_POS, depth_in_max);
       hasChanges = true;
       sprintf(responseLoRa, MESSAGE_RESPONSE, stationId, "OK");
       sendEncryptedLoRa(responseLoRa);
     }
 
-    if (toMin)
+    //* Atualiza os valores de entrada minima
+    if (depth_in_min)
+    {
+      if (DEBUG)
+      {
+        Serial.printf("!!!! in_min Atualizado de %f, para %f", DEPTH_IN_MIN, depth_in_min);
+      }
+      DEPTH_IN_MIN = depth_in_min;
+      EEPROM.writeDouble(DEPTH_IN_MIN_POS, depth_in_min);
+      hasChanges = true;
+      sprintf(responseLoRa, MESSAGE_RESPONSE, stationId, "OK");
+      sendEncryptedLoRa(responseLoRa);
+    }
+
+    // * Atualiza os valores maximo
+    if (depth_out_max)
+    {
+      if (DEBUG)
+      {
+        Serial.printf("!!!! depth_out_max Atualizado de %f, para %f", DEPTH_OUT_MAX, depth_out_max);
+      }
+      DEPTH_OUT_MAX = depth_out_max;
+      EEPROM.writeDouble(DEPTH_OUT_MAX_POS, depth_out_max);
+      hasChanges = true;
+      sprintf(responseLoRa, MESSAGE_RESPONSE, stationId, "OK");
+      sendEncryptedLoRa(responseLoRa);
+    }
+
+    if (depth_out_min)
     {
 
       if (DEBUG)
       {
-        Serial.printf("!!!! toMin Atualizado de %f, para %f", TOMIN, toMin);
+        Serial.printf("!!!! depth_out_min Atualizado de %f, para %f", DEPTH_OUT_MIN, depth_out_min);
       }
-      TOMIN = toMin;
-      EEPROM.writeDouble(TO_MIN_POS, toMin);
+      DEPTH_OUT_MIN = depth_out_min;
+      EEPROM.writeDouble(DEPTH_OUT_MIN_POS, depth_out_min);
       hasChanges = true;
       sprintf(responseLoRa, MESSAGE_RESPONSE, stationId, "OK");
       sendEncryptedLoRa(responseLoRa);
@@ -693,6 +723,18 @@ void setup()
   // Inicializa a EEPROM do ESP32
   EEPROM.begin(256);
 
+  //* Ativa os sensores de pressão
+  while (!sens_pressure_1.begin())
+  {
+    if (DEBUG)
+    {
+      Serial.println("Failed to find INA219 chip");
+    }
+    delay(200);
+  }
+
+  sens_pressure_1.setCalibration_32V_1A();
+
   pinMode(GPIO_BOTAO, INPUT);
   attachInterrupt(GPIO_BOTAO, funcao_ISR, RISING);
 
@@ -716,28 +758,7 @@ void setup()
   }
   Serial.println(F("LoRa Initializing OK!"));
 
-  esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_11, ADC_WIDTH_BIT_12, 0, &adc1_chars);
-
-  ESP_ERROR_CHECK(adc1_config_width(ADC_WIDTH_BIT_12));
-  ESP_ERROR_CHECK(adc1_config_channel_atten(ADC1_CHANNEL_6, ADC_ATTEN_DB_11));
-
   checkButton(); // Verifica se o botao está pressionado para dar reset
-
-  // Estrutura que contem as informacoes para calibracao
-  esp_adc_cal_value_t adc_type = esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_11, ADC_WIDTH_BIT_12, 1100, &adc1_chars); // Inicializa a estrutura de calibracao
-
-  if (adc_type == ESP_ADC_CAL_VAL_EFUSE_VREF)
-  {
-    ESP_LOGI("ADC CAL", "Vref eFuse encontrado: %umV", adc_type.vref);
-  }
-  else if (adc_type == ESP_ADC_CAL_VAL_EFUSE_TP)
-  {
-    ESP_LOGI("ADC CAL", "Two Point eFuse encontrado");
-  }
-  else
-  {
-    ESP_LOGW("ADC CAL", "Nada encontrado, utilizando Vref padrao: %umV", adc_type.vref);
-  }
 
   for (uint8_t i = 0; i < ID_LEN; i++)
   {
@@ -777,8 +798,8 @@ void setup()
   stampTimeWriten = millis(); // Inicializa o tempo do stamp de tempo para gravar dados na eeprom
 
   ltrs = EEPROM.readDouble(LTRS_POSITION);
-  TOMAX = EEPROM.readDouble(TO_MAX_POS);
-  TOMIN = EEPROM.readDouble(TO_MIN_POS);
+  depth_out_max = EEPROM.readDouble(DEPTH_OUT_MAX_POS);
+  depth_out_min = EEPROM.readDouble(DEPTH_OUT_MIN_POS);
   setDepth = EEPROM.readDouble(DEPTH_POS);
   multLtrs = EEPROM.readDouble(MULT_LTRS_POS);
 
@@ -787,17 +808,48 @@ void setup()
     EEPROM.writeDouble(MULT_LTRS_POS, 1.00);
     multLtrs = 1.00;
     ltrs = 1;
-    TOMAX = 1;
-    TOMIN = 1;
+    depth_out_max = 1;
+    depth_out_min = 1;
     setDepth = 1;
 
     vTaskDelay(200 / portTICK_PERIOD_MS);
     EEPROM.commit();
     Serial.printf("\n        *** Atenção! ***     \n*** Valor original atualizado para 1***\n");
   }
-  Serial.printf("\nValores Iniciados:\nLitros acumulados: %f\nTo Max: %f\nTo Min: %f\n Profundidade: %f\n Multiplicador Litros: %f\n", ltrs, TOMAX, TOMIN, setDepth, multLtrs);
+  Serial.printf("\nValores Iniciados:\nLitros acumulados: %f\nTo Max: %f\nTo Min: %f\n Profundidade: %f\n Multiplicador Litros: %f\n", ltrs, depth_out_max, depth_out_min, setDepth, multLtrs);
 
   ltrsBurned = ltrs;
+
+  DEPTH_OUT_MAX = EEPROM.readDouble(DEPTH_OUT_MAX_POS);
+  DEPTH_OUT_MIN = EEPROM.readDouble(DEPTH_OUT_MIN_POS);
+
+  if (isnan(DEPTH_OUT_MAX) || isnan(DEPTH_OUT_MIN)) //* Se não tem valores definidos reseta para os padrões
+  {
+    DEPTH_OUT_MAX = 9.65;
+    DEPTH_OUT_MIN = 0;
+    EEPROM.writeDouble(DEPTH_OUT_MAX_POS, DEPTH_OUT_MAX);
+    EEPROM.writeDouble(DEPTH_OUT_MIN_POS, DEPTH_OUT_MIN);
+    delay(200);
+    EEPROM.commit();
+    Serial.printf("\n        *** Atenção! ***     \n*** Valores originais atualizados para valores padrão***\n");
+  }
+  Serial.printf("\nValores Iniciados:\nTo Max: %f\nTo Min: %f\n", DEPTH_OUT_MAX, DEPTH_OUT_MIN);
+
+  DEPTH_IN_MAX = EEPROM.readDouble(DEPTH_IN_MAX_POS);
+  DEPTH_IN_MIN = EEPROM.readDouble(DEPTH_IN_MIN_POS);
+
+  if (isnan(DEPTH_IN_MAX) || isnan(DEPTH_IN_MIN)) //* Se não tem valores definidos reseta para os padrões
+  {
+    DEPTH_IN_MAX = 11.75;
+    DEPTH_IN_MIN = 3.85;
+    EEPROM.writeDouble(DEPTH_IN_MAX_POS, DEPTH_IN_MAX);
+    EEPROM.writeDouble(DEPTH_IN_MIN_POS, DEPTH_IN_MIN);
+
+    vTaskDelay(200 / portTICK_PERIOD_MS);
+    EEPROM.commit();
+    Serial.printf("\n        *** Atenção! ***     \n*** Valores originais atualizados para valores padrão***\n");
+  }
+  Serial.printf("\nValores Iniciados:\nIN Max: %f\nIN Min: %f\n", DEPTH_IN_MAX, DEPTH_IN_MIN);
 
   lastState = digitalRead(GPIO_BOTAO);
 }
@@ -836,17 +888,18 @@ void loop()
   {
     findSensorsTimer = now;
 
-    for (int i = 0; i < 100; i++)
-    {
-      currentSensorAdc += esp_adc_cal_raw_to_voltage(adc1_get_raw(ADC1_CHANNEL_6), &adc1_chars); //* Ajuste dos valores analógicos (cálculo de não-linearidade)
-      ets_delay_us(30);
-    }
-    currentSensorAdc /= 100;
+    depth = 0;
 
-    double in_min = 192;
-    double in_max = 4096;
-    depth = setDepth - (((currentSensorAdc - in_min) * (TOMAX - TOMIN)) / ((in_max - in_min) + TOMIN));
-    Serial.printf("CurrentSensorAdc: %d mV, Raw: %i, Depth: %fm", currentSensorAdc, adc1_get_raw(ADC1_CHANNEL_6), depth);
+    for (int i = 0; i < 10; i++)
+    {
+      depth = depth + sens_pressure_1.getCurrent_mA();
+      delay(30);
+    }
+
+    depth = depth / 10;
+
+    corrente = ((corrente - DEPTH_IN_MIN) * (DEPTH_OUT_MAX - DEPTH_OUT_MIN) / (DEPTH_IN_MAX - DEPTH_IN_MIN)) + DEPTH_OUT_MIN;
+    Serial.printf("corrente: %d mA, Depth: %.2fm", corrente, depth);
     Serial.println();
   }
 

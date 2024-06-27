@@ -22,6 +22,8 @@
 #include <Update.h>
 #include <HTTPClient.h>
 #include <EEPROM.h>
+#include <Wire.h>
+#include <Adafruit_INA219.h> // INA219 logic
 
 #include "nvs_flash.h"
 #include "nvs.h"
