@@ -294,7 +294,7 @@ void connectWifi(bool active)
 {
   if (active)
   {
-    WiFi.mode(WIFI_STA); // Set para modo station
+    WiFi.mode(WIFI_STA); // explicitly set mode, esp defaults to STA+AP
 
     if (wm_nonblocking)
     {
@@ -310,19 +310,17 @@ void connectWifi(bool active)
     std::vector<const char *> menu = {"wifi", "info", "param", "sep", "restart", "exit"};
     wm.setMenu(menu);
 
-    // Página com tema escuro
     wm.setClass("invert");
 
-    wm.setConnectTimeout(20);      // Tenta conectar por 20 segundos antes de abrir o portal
-    wm.setConfigPortalTimeout(60); // Fecha o portal de configuração após 1 min
+    wm.setConfigPortalTimeout(80);
 
     bool res;
-    res = wm.autoConnect("S2D MC102", "s2dsolucoes15"); // Nome e senha da rede
+    res = wm.autoConnect("S2D MPC100", "password"); // password protected ap
 
     if (!res)
     {
       Serial.println("Failed to connect or hit timeout");
-      ESP.restart();
+      // ESP.restart();
     }
     else
     {
