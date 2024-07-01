@@ -241,7 +241,7 @@ void connectWifi(bool active)
 {
   if (active)
   {
-    WiFi.mode(WIFI_STA); // explicitly set mode, esp defaults to STA+AP
+    WiFi.mode(WIFI_STA);
 
     if (wm_nonblocking)
     {
@@ -262,12 +262,11 @@ void connectWifi(bool active)
     wm.setConfigPortalTimeout(80);
 
     bool res;
-    res = wm.autoConnect("S2D MPC100", "password"); // password protected ap
+    res = wm.autoConnect("S2D MPC100", "s2dsolucoes15");
 
     if (!res)
     {
       Serial.println("Failed to connect or hit timeout");
-      // ESP.restart();
     }
     else
     {
@@ -825,8 +824,8 @@ void setup()
 
   if (isnan(DEPTH_OUT_MAX) || isnan(DEPTH_OUT_MIN)) //* Se não tem valores definidos reseta para os padrões
   {
-    DEPTH_OUT_MAX = 9.65;
-    DEPTH_OUT_MIN = 0;
+    DEPTH_OUT_MAX = 20; 
+    DEPTH_OUT_MIN = 4;    
     EEPROM.writeDouble(DEPTH_OUT_MAX_POS, DEPTH_OUT_MAX);
     EEPROM.writeDouble(DEPTH_OUT_MIN_POS, DEPTH_OUT_MIN);
     delay(200);
@@ -840,8 +839,8 @@ void setup()
 
   if (isnan(DEPTH_IN_MAX) || isnan(DEPTH_IN_MIN)) //* Se não tem valores definidos reseta para os padrões
   {
-    DEPTH_IN_MAX = 11.75;
-    DEPTH_IN_MIN = 3.85;
+    DEPTH_IN_MAX = 11.75; //! Valores a atualizar
+    DEPTH_IN_MIN = 3.85;  //! Valores a atualizar
     EEPROM.writeDouble(DEPTH_IN_MAX_POS, DEPTH_IN_MAX);
     EEPROM.writeDouble(DEPTH_IN_MIN_POS, DEPTH_IN_MIN);
 
@@ -862,7 +861,7 @@ void loop()
 
   if (ltrs != ltrsAnterior)
   {
-    Serial.printf(">>>Valor de LTRS NOVA UPDATE: %f>>>\n", ltrs);
+    Serial.printf(">>>Valor de LTRS NOVA UPDATE: %f<<<\n", ltrs);
     // Atualiza o valor anterior de ltrs
     ltrsAnterior = ltrs;
   }
@@ -899,7 +898,7 @@ void loop()
     depth = depth / 10;
 
     corrente = ((corrente - DEPTH_IN_MIN) * (DEPTH_OUT_MAX - DEPTH_OUT_MIN) / (DEPTH_IN_MAX - DEPTH_IN_MIN)) + DEPTH_OUT_MIN;
-    Serial.printf("corrente: %d mA, Depth: %.2fm", corrente, depth);
+    Serial.printf("corrente: %.2f mA, Depth: %.2fm", corrente, depth);
     Serial.println();
   }
 
@@ -922,8 +921,8 @@ void loop()
   {
     if (DEBUG)
     {
-      Serial.println(F("\n**Reiniciando o Station**"));
-      Serial.println(F("**Time out LoRa**\n"));
+      Serial.println("\n**Reiniciando o Station**");
+      Serial.println("**Time out LoRa**\n");
     }
     ESP.restart();
   }
