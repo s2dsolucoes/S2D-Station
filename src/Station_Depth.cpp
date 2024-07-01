@@ -328,7 +328,7 @@ void parsePackage()
   double depth_in_max = doc["depth_in_max"];
   double setDepthValue = doc["setDepthValue"];
   double mCubics = doc["mCubics"];
-  double multLtrsValue = doc["multLtrsValue"];
+  double multLtrsValue = doc["multLtrsValue"];  
   int wifiMode = doc["wifiMode"];
   bool setDebug = doc["debug"];
   bool reset = doc["reset"];
@@ -370,7 +370,7 @@ void parsePackage()
           //*DEPTH_RESPONSE = "{\"id\":\"%s\",\"type\":\"%s\",\"id_sensor\":%d,\"ltrs\":%.3lf,\"id_sensor2\":%d,\"depth\":%.2f}";
           if (strlen(stationId) != 0)
           {
-            sprintf(responseLoRa, DEPTH_RESPONSE, stationId, sensorId, cubic, sensorId2, depth);
+            sprintf(responseLoRa, DEPTH_RESPONSE, stationId, sensorId, ltrs, sensorId2, depth);
 
             if (DEBUG)
             {
@@ -700,7 +700,6 @@ void atualizarOTA()
 }
 
 //! ****************************************************************************************************************************************
-
 /**
  * Recebe pacotes via LoRa e executa as suas instruções
  *
@@ -824,8 +823,8 @@ void setup()
 
   if (isnan(DEPTH_OUT_MAX) || isnan(DEPTH_OUT_MIN)) //* Se não tem valores definidos reseta para os padrões
   {
-    DEPTH_OUT_MAX = 20; 
-    DEPTH_OUT_MIN = 4;    
+    DEPTH_OUT_MAX = 20;
+    DEPTH_OUT_MIN = 4;
     EEPROM.writeDouble(DEPTH_OUT_MAX_POS, DEPTH_OUT_MAX);
     EEPROM.writeDouble(DEPTH_OUT_MIN_POS, DEPTH_OUT_MIN);
     delay(200);
@@ -907,7 +906,6 @@ void loop()
     if ((millis() - stampTimeWriten) > timeWriten) // A cada 15s grava ltrs na eeprom
     {
       EEPROM.writeDouble(LTRS_POSITION, ltrs);
-      //?Delay?
       vTaskDelay(200 / portTICK_PERIOD_MS);
       EEPROM.commit(); // Finaliza a escrita na EEPROM
       Serial.printf("Valor de LTRS (If updated): %f\n", ltrs);
